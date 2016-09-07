@@ -2,6 +2,7 @@
 
 namespace Prezent\Soap\Client;
 
+use Prezent\Soap\Client\Event\FaultEvent;
 use Prezent\Soap\Client\Event\RequestEvent;
 use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
@@ -135,7 +136,11 @@ class SoapClient extends BaseSoapClient
      */
     public function __call($method, $args)
     {
-        $result = parent::__call($method, $args);
+        try {
+            $result = parent::__call($method, $args);
+        } catch (\SoapFault $fault) {
+            return $this->handleFault($fault);
+        }
 
         return $result;
     }
@@ -145,7 +150,11 @@ class SoapClient extends BaseSoapClient
      */
     public function __soapCall($method, $args, $options = [], $inputHeaders = [], &$outputHeaders = [])
     {
-        $result = parent::__soapCall($method, $args, $options, $inputHeaders, $outputHeaders);
+        try {
+            $result = parent::__soapCall($method, $args, $options, $inputHeaders, $outputHeaders);
+        } catch (\SoapFault $fault) {
+            return $this->handleFault($fault);
+        }
 
         return $result;
     }
@@ -188,7 +197,7 @@ class SoapClient extends BaseSoapClient
         } catch (\Exception $e) {
             $this->__soap_fault = new \SoapFault(
                 'Client',
-                'Error during ' . Events::REPONSE . ' event',
+                'Error during ' . Events::RESPONSE . ' event',
                 get_class($e),
                 $e->getMessage()
             );
@@ -225,5 +234,30 @@ class SoapClient extends BaseSoapClient
         $this->eventDispatcher->dispatch(Events::WSDL_RESPONSE, $event);
         
         return $event->getWsdl()->saveXML();
+    }
+
+    /**
+     * Handle a SoapFault
+     *
+     * If event propagation is not stopped, the fault will be re-thrown
+     *
+     * @param \SoapFault $fault
+     * @return mixed
+     */
+    private function handleFault(\SoapFault $fault)
+    {
+        $event = new FaultEvent(
+            $fault,
+            $this->__getLastRequest(),
+            $this->__getLastRequestHeaders(),
+            $this->__getLastResponse(),
+            $this->__getLastResponseHeaders()
+        );
+
+        if (!$this->eventDispatcher->dispatch(Events::FAULT, $event)->isPropagationStopped()) {
+            throw $fault;
+        }
+
+        return $event->getResponse();
     }
 }

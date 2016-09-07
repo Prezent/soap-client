@@ -42,5 +42,19 @@ final class Events
     const REQUEST = 'soap.request';
     const RESPONSE = 'soap.response';
     const FINISH = 'soap.finish';
+
+    /**
+     * The FAULT event is triggered when a SOAP call has thrown a SoapFault. Listeners are passed a
+     * Prezent\Soap\Client\Event\FaultEvent instance.
+     *
+     * If propagation is stopped on this event then the fault
+     * will be considered as handled. Any response provided to the event will be returned. If propagation
+     * is not stopped then the fault will be re-thrown. Example:
+     *
+     *     $client->__addListener(Events::FAULT, function(FaultEvent $event) use ($backup) {
+     *         $event->setResponse($backup->getResponse());
+     *         $event->stopPropagation();
+     *     });
+     */
     const FAULT = 'soap.fault';
 }

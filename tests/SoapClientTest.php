@@ -3,6 +3,7 @@
 namespace Prezent\Soap\Client\Tests;
 
 use Prezent\Soap\Client\SoapClient;
+use Prezent\Soap\Client\Event\FaultEvent;
 use Prezent\Soap\Client\Event\RequestEvent;
 use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
@@ -158,6 +159,48 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
             [Events::REQUEST, [$this, 'handleRequest']],
             [Events::RESPONSE, function (ResponseEvent $event) {
                 throw new \RuntimeException('Test exception');
+            }]
+        ]]);
+
+        $response = $client->sayHello('World');
+    }
+
+    /**
+     * Test fault event is triggered and re-thrown
+     *
+     * @return void
+     */
+    public function testFaultEvent()
+    {
+        $fault = null;
+
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
+            [Events::REQUEST, function (RequestEvent $event) {
+                throw new \RuntimeException('Test exception');
+            }],
+            [Events::FAULT, function (FaultEvent $event) use (&$fault) {
+                $fault = $event->getFault();
+            }]
+        ]]);
+
+        try {
+            $response = $client->sayHello('World');
+        } catch (\SoapFault $e) {
+            $this->assertInstanceOf(\SoapFault::class, $e);
+        }
+
+        $this->assertInstanceOf(\SoapFault::class, $fault);
+    }
+
+    public function testHandleFault()
+    {
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
+            [Events::REQUEST, [$this, 'handleRequest']],
+            [Events::RESPONSE, function (ResponseEvent $event) {
+                throw new \RuntimeException('Test exception');
+            }],
+            [Events::FAULT, function (FaultEvent $event) {
+                $event->stopPropagation();
             }]
         ]]);
 
