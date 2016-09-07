@@ -1,0 +1,32 @@
+{
+    "name": "prezent/soap-client",
+    "type": "library",
+    "description": "Easily extendable SOAP client with WS-Addressing support",
+    "keywords": ["soap", "wsa", "ws-addressing"],
+    "minimum-stability": "stable",
+    "homepage": "http://www.prezent.nl",
+    "require": {
+        "php": "^5.5|^7.0",
+        "ramsey/uuid": "^3.0",
+        "symfony/event-dispatcher": "^2.3|^3.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sander Marechal",
+            "email": "sander@prezent.nl"
+        },
+        {
+            "name": "Prezent Internet B.V.",
+            "email": "github@prezent.nl"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "Prezent\\Soap\\Client\\": "src/" }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
