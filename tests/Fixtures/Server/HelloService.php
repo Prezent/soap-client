@@ -27,7 +27,7 @@ class HelloService
     // SOAP function
     public function sayHello($name)
     {
-        return 'Hello ' . $name . '!';
+        return 'Hello, ' . $name . '!';
     }
 }
 

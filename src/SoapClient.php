@@ -158,20 +158,43 @@ class SoapClient extends BaseSoapClient
         $dom = new \DOMDocument();
         $dom->loadXML($request);
 
-        $requestEvent = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
-        $response = $this->eventDispatcher->dispatch(Events::REQUEST, $requestEvent)->getResponse();
+        try {
+            $requestEvent = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
+            $this->eventDispatcher->dispatch(Events::REQUEST, $requestEvent);
+        } catch (\Exception $e) {
+            $this->__soap_fault = new \SoapFault(
+                'Client',
+                'Error during ' . Events::REQUEST . ' event',
+                get_class($e),
+                $e->getMessage()
+            );
+
+            return;
+        }
 
         if ($this->tracing) {
             $this->__last_request = $requestEvent->getRequest()->saveXML();
             $this->__last_request_headers = $requestEvent->getRequestHeaders();
         }
 
-        if (!$response) {
-            throw new \RuntimeException('Could not get response');
+        if (!$requestEvent->getResponse()) {
+            $this->__soap_fault = new \SoapFault('Client', 'No response could be generated');
+            return;
         }
         
-        $responseEvent = new ResponseEvent($response);
-        $this->eventDispatcher->dispatch(Events::RESPONSE, $responseEvent);
+        try {
+            $responseEvent = new ResponseEvent($requestEvent->getResponse());
+            $this->eventDispatcher->dispatch(Events::RESPONSE, $responseEvent);
+        } catch (\Exception $e) {
+            $this->__soap_fault = new \SoapFault(
+                'Client',
+                'Error during ' . Events::REPONSE . ' event',
+                get_class($e),
+                $e->getMessage()
+            );
+
+            return;
+        }
 
         if ($this->tracing) {
             $this->__last_response = $responseEvent->getResponse()->saveXML();
