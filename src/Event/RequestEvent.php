@@ -20,6 +20,11 @@ class RequestEvent extends Event
     /**
      * @var string
      */
+    private $requestHeaders;
+
+    /**
+     * @var string
+     */
     private $location;
 
     /**
@@ -41,6 +46,11 @@ class RequestEvent extends Event
      * @var \DOMDocument
      */
     private $response;
+
+    /**
+     * @var string
+     */
+    private $responseHeaders;
 
     /**
      * Constructor
@@ -79,6 +89,28 @@ class RequestEvent extends Event
     public function setRequest($request)
     {
         $this->request = $request;
+        return $this;
+    }
+
+    /**
+     * Get requestHeaders
+     *
+     * @return string
+     */
+    public function getRequestHeaders()
+    {
+        return $this->requestHeaders;
+    }
+    
+    /**
+     * Set requestHeaders
+     *
+     * @param string $requestHeaders
+     * @return self
+     */
+    public function setRequestHeaders($requestHeaders)
+    {
+        $this->requestHeaders = $requestHeaders;
         return $this;
     }
 
@@ -189,6 +221,28 @@ class RequestEvent extends Event
     public function setResponse($response)
     {
         $this->response = $response;
+        return $this;
+    }
+
+    /**
+     * Get responseHeaders
+     *
+     * @return string
+     */
+    public function getResponseHeaders()
+    {
+        return $this->responseHeaders;
+    }
+    
+    /**
+     * Set responseHeaders
+     *
+     * @param string $responseHeaders
+     * @return self
+     */
+    public function setResponseHeaders($responseHeaders)
+    {
+        $this->responseHeaders = $responseHeaders;
         return $this;
     }
 }

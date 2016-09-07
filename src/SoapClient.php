@@ -24,6 +24,11 @@ class SoapClient extends BaseSoapClient
     private $eventDispatcher;
 
     /**
+     * @var bool Toggle tracing. This cannot be named `trace` or it will conflict with an internal SoapClient variable
+     */
+    private $tracing = false;
+
+    /**
      * {@inheritDoc}
      */
     public function __construct($wsdl, array $options = [])
@@ -32,6 +37,11 @@ class SoapClient extends BaseSoapClient
         $this->streamContext = isset($options['stream_context'])
             ? $options['stream_context']
             : stream_context_create();
+
+        // Check for tracing
+        if (isset($options['trace'])) {
+            $this->tracing = $options['trace'];
+        }
 
         // Set up event dispatcher
         if (isset($options['event_dispatcher'])) {
@@ -148,17 +158,27 @@ class SoapClient extends BaseSoapClient
         $dom = new \DOMDocument();
         $dom->loadXML($request);
 
-        $event = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
-        $response = $this->eventDispatcher->dispatch(Events::REQUEST, $event)->getResponse();
+        $requestEvent = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
+        $response = $this->eventDispatcher->dispatch(Events::REQUEST, $requestEvent)->getResponse();
+
+        if ($this->tracing) {
+            $this->__last_request = $requestEvent->getRequest()->saveXML();
+            $this->__last_request_headers = $requestEvent->getRequestHeaders();
+        }
 
         if (!$response) {
             throw new \RuntimeException('Could not get response');
         }
         
-        $event = new ResponseEvent($response);
-        $this->eventDispatcher->dispatch(Events::RESPONSE, $event);
+        $responseEvent = new ResponseEvent($response);
+        $this->eventDispatcher->dispatch(Events::RESPONSE, $responseEvent);
+
+        if ($this->tracing) {
+            $this->__last_response = $responseEvent->getResponse()->saveXML();
+            $this->__last_response_headers = $requestEvent->getResponseHeaders();
+        }
         
-        return $event->getResponse()->saveXML();
+        return $responseEvent->getResponse()->saveXML();
     }
 
     /**

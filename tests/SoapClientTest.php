@@ -96,8 +96,7 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
             [Events::REQUEST, function (RequestEvent $event) {
-                $response = new \DOMDocument();
-                $response->loadXML(<<<XML
+                $xml = <<<XML
 <SOAP-ENV:Envelope
     xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
     xmlns:ns1="urn:examples:helloservice"
@@ -111,8 +110,10 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
         </ns1:sayHelloResponse>
     </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
-XML
-                );
+XML;
+
+                $response = new \DOMDocument();
+                $response->loadXML($xml);
 
                 $event->setResponse($response);
                 $event->stopPropagation();
@@ -122,5 +123,63 @@ XML
         $response = $client->sayHello('World');
 
         $this->assertEquals('Hello you!', $response);
+    }
+
+    /**
+     * Test request tracing
+     */
+    public function testTracing()
+    {
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['trace' => true, 'event_listeners' => [
+            // Modify the request to test that the modified request is stored
+            [Events::REQUEST, function (RequestEvent $event) {
+                $dom = new \DOMDocument();
+                $dom->loadXML(str_replace('World', 'Galaxy', $event->getRequest()->saveXML()));
+
+                $event->setRequest($dom);
+            }],
+
+            // Generate custom response and set request/response headers
+            [Events::REQUEST, function (RequestEvent $event) {
+                $xml = <<<XML
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:ns1="urn:examples:helloservice"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+    SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <SOAP-ENV:Body>
+        <ns1:sayHelloResponse>
+            <greeting xsi:type="xsd:string">Hello Galaxy!</greeting>
+        </ns1:sayHelloResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+XML;
+
+                $response = new \DOMDocument();
+                $response->loadXML($xml);
+
+                $event->setRequestHeaders('X-Header: request');
+                $event->setResponse($response);
+                $event->setResponseHeaders('X-Header: response');
+                $event->stopPropagation();
+            }],
+
+            // Modify the response to test that the modified response is stored
+            [Events::RESPONSE, function (ResponseEvent $event) {
+                $dom = new \DOMDocument();
+                $dom->loadXML(str_replace('Galaxy', 'Universe', $event->getResponse()->saveXML()));
+
+                $event->setResponse($dom);
+            }],
+        ]]);
+
+        $response = $client->sayHello('World');
+
+        $this->assertEquals('X-Header: request', $client->__getLastRequestHeaders());
+        $this->assertEquals('X-Header: response', $client->__getLastResponseHeaders());
+        $this->assertRegexp('/Galaxy/', $client->__getLastRequest());
+        $this->assertRegexp('/Hello Universe/', $client->__getLastResponse());
     }
 }
