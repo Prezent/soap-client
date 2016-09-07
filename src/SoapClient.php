@@ -2,6 +2,8 @@
 
 namespace Prezent\Soap\Client;
 
+use Prezent\Soap\Client\Event\RequestEvent;
+use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
 use Prezent\Soap\Client\Event\WsdlResponseEvent;
 use SoapClient as BaseSoapClient;
@@ -63,8 +65,31 @@ class SoapClient extends BaseSoapClient
             unset($options['event_subscribers']);
         }
 
-        // Attach built-in listeners
-        $this->__addListener(Events::WSDL_REQUEST, [$this, '__loadWsdl'], -999);
+        // Fallback listener for loading WSDL files
+        $this->__addListener(Events::WSDL_REQUEST, function (WsdlRequestEvent $event) {
+            $event->setWsdl(file_get_contents($event->getUri(), false, $this->streamContext));
+            $event->stopPropagation();
+        }, -999);
+
+        // Fallback listener for making SOAP requests
+        $this->__addListener(Events::REQUEST, function (RequestEvent $event) {
+            $response = parent::__doRequest(
+                $event->getRequest()->saveXML(),
+                $event->getLocation(),
+                $event->getAction(),
+                $event->getVersion(),
+                (int) $event->isOneWay()
+            );
+
+            $dom = new \DOMDocument();
+
+            if ($response) {
+                $dom->loadXML($response);
+            }
+
+            $event->setResponse($dom);
+            $event->stopPropagation();
+        }, -999);
 
         // Load WSDL using a data:// URI. This allows us to load the WSDL by any transport
         // instead of always using the built-in method. It also allows custom WSDL parsing
@@ -120,21 +145,20 @@ class SoapClient extends BaseSoapClient
      */
     public function __doRequest($request, $location, $action, $version, $oneWay = 0)
     {
-        $result = parent::__doRequest($request, $location, $action, $version, $oneWay);
-        
-        return $result;
-    }
+        $dom = new \DOMDocument();
+        $dom->loadXML($request);
 
-    /**
-     * Load a WSDL file using the built-in stream context
-     *
-     * @param WsdlRequestEvent $event
-     * @return string
-     */
-    public function __loadWsdl(WsdlRequestEvent $event)
-    {
-        $event->setWsdl(file_get_contents($event->getUri(), false, $this->streamContext));
-        $event->stopPropagation();
+        $event = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
+        $response = $this->eventDispatcher->dispatch(Events::REQUEST, $event)->getResponse();
+
+        if (!$response) {
+            throw new \RuntimeException('Could not get response');
+        }
+        
+        $event = new ResponseEvent($response);
+        $this->eventDispatcher->dispatch(Events::RESPONSE, $event);
+        
+        return $event->getResponse()->saveXML();
     }
 
     /**

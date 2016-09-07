@@ -21,9 +21,19 @@
         </testsuite>
     </testsuites>
 
+    <listeners>
+         <listener class="\Prezent\Soap\Client\Tests\PHPUnit\WebServerListener" />
+    </listeners>
+
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./src</directory>
         </whitelist>
     </filter>
+
+    <php>
+        <const name="WEB_SERVER_HOSTNAME" value="127.0.0.1" />
+        <const name="WEB_SERVER_PORT" value="8080" />
+        <const name="WEB_SERVER_DOCROOT" value="./tests/Fixtures/Server" />
+    </php>
 </phpunit>

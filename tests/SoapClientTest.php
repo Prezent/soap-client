@@ -3,6 +3,8 @@
 namespace Prezent\Soap\Client\Tests;
 
 use Prezent\Soap\Client\SoapClient;
+use Prezent\Soap\Client\Event\RequestEvent;
+use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
 use Prezent\Soap\Client\Event\WsdlResponseEvent;
 use Prezent\Soap\Client\Events;
@@ -65,5 +67,60 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertCount(1, $functions);
         $this->assertEquals('string sayGoodbye(string $firstName)', $functions[0]);
+    }
+
+    /**
+     * Test requests using the built-in transport
+     *
+     * @group webserver
+     */
+    public function testRequest()
+    {
+        $uri = 'http://' . WEB_SERVER_HOSTNAME . ':' . WEB_SERVER_PORT . '/HelloService.php?wsdl';
+
+        $client = new SoapClient($uri, ['event_listeners' => [
+            [Events::REQUEST, function (RequestEvent $event) {
+                $this->assertInstanceOf(\DOMDocument::class, $event->getRequest());
+            }]
+        ]]);
+
+        $response = $client->sayHello('World');
+
+        $this->assertEquals('Hello World!', $response);
+    }
+
+    /**
+     * Test request using custom transport
+     */
+    public function testRequestLoading()
+    {
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
+            [Events::REQUEST, function (RequestEvent $event) {
+                $response = new \DOMDocument();
+                $response->loadXML(<<<XML
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:ns1="urn:examples:helloservice"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+    SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <SOAP-ENV:Body>
+        <ns1:sayHelloResponse>
+            <greeting xsi:type="xsd:string">Hello you!</greeting>
+        </ns1:sayHelloResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+XML
+                );
+
+                $event->setResponse($response);
+                $event->stopPropagation();
+            }]
+        ]]);
+
+        $response = $client->sayHello('World');
+
+        $this->assertEquals('Hello you!', $response);
     }
 }
