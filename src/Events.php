@@ -38,13 +38,27 @@ final class Events
      */
     const WSDL_RESPONSE = 'wsdl.response';
 
+    /**
+     * The CALL event is triggered just after calling a SOAP method.
+     *
+     * The listener is passed a Prezent\Soap\Client\Event\Callevent instance. It allows changing the method
+     * and arguments for e.g. custom marshalling. The final arguments should be a value that van be understood
+     * by PHP's built-in SoapClient. Example:
+     *
+     *     $client->__addListener(Events::CALL, function(CallEvent $event) {
+     *         $arguments = $serializer->serialize($event->getArguments());
+     *         $event->setArguments($arguments);
+     *     });
+     */
     const CALL = 'soap.call';
 
     /**
-     * The REQUEST event is triggered when a SOAP request is about to be sent over a transport. The request and
-     * any parameters may be modified here. When implementing a custom transport, you can set the response as a
-     * string on the event and stop propagation. Optionally you can also set the request and response headers
-     * to facilitate tracing.
+     * The REQUEST event is triggered when a SOAP request is about to be sent over a transport.
+     *
+     * The listener is passed a Prezent\Soap\Client\Event\RequestEvent instance. The request and any
+     * parameters may be modified here. When implementing a custom transport, you can set the response
+     * as a string on the event and stop propagation. Optionally you can also set the request and response
+     * headers to facilitate tracing.
      *
      * All exceptions are converted to \SoapFault.
      *
@@ -62,8 +76,9 @@ final class Events
     const REQUEST = 'soap.request';
 
     /**
-     * The RESPONSE event is triggered when a SOAP response has been recieved. The response can be modified before
-     * being processed by the rest of the client. Example:
+     * The RESPONSE event is triggered when a SOAP response has been recieved. The listener is passed a
+     * Prezent\Soap\Client\Event\ResponseEvent instance. The response can be modified before being processed
+     * by the rest of the client. Example:
      *
      *     $client->__addListener(Events::RESPONSE, function(ResponseEvent $event) {
      *         $logger->log($event->getResponse()->saveXML());
@@ -71,6 +86,17 @@ final class Events
      */
     const RESPONSE = 'soap.response';
 
+    /**
+     * The FINISH event is triggered just before returning from a SOAP method. Listeners are passed a
+     * Prezent\Soap\Client\Event\FinishEvent instance. It allows changing the response for e.g. custom marshalling.
+     *
+     * The initial response is a value, array or object as returned by PHP's built-in SoapClient. Example:
+     *
+     *     $client->__addListener(Events::FINISH, function(FinishEvent $event) {
+     *         $response = $serializer->unserialize(MyResponse::class, $event->getResponse());
+     *         $event->setResponse($response);
+     *     });
+     */
     const FINISH = 'soap.finish';
 
     /**

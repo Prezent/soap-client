@@ -2,7 +2,9 @@
 
 namespace Prezent\Soap\Client;
 
+use Prezent\Soap\Client\Event\CallEvent;
 use Prezent\Soap\Client\Event\FaultEvent;
+use Prezent\Soap\Client\Event\FinishEvent;
 use Prezent\Soap\Client\Event\RequestEvent;
 use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
@@ -132,13 +134,16 @@ class SoapClient extends BaseSoapClient
      */
     public function __call($method, $args)
     {
+        $event = new CallEvent($method, $args);
+        $this->eventDispatcher->dispatch(Events::CALL, $event);
+
         try {
-            $result = parent::__call($method, $args);
+            $response = parent::__call($event->getMethod(), $event->getArguments());
         } catch (\SoapFault $fault) {
             return $this->handleFault($fault);
         }
 
-        return $result;
+        return $this->eventDispatcher->dispatch(Events::FINISH, new FinishEvent($response))->getResponse();
     }
 
     /**
@@ -146,13 +151,22 @@ class SoapClient extends BaseSoapClient
      */
     public function __soapCall($method, $args, $options = [], $inputHeaders = [], &$outputHeaders = [])
     {
+        $event = new CallEvent($method, $args);
+        $this->eventDispatcher->dispatch(Events::CALL, $event);
+
         try {
-            $result = parent::__soapCall($method, $args, $options, $inputHeaders, $outputHeaders);
+            $response = parent::__soapCall(
+                $event->getMethod(),
+                $event->getArguments(),
+                $options,
+                $inputHeaders,
+                $outputHeaders
+            );
         } catch (\SoapFault $fault) {
             return $this->handleFault($fault);
         }
 
-        return $result;
+        return $this->eventDispatcher->dispatch(Events::FINISH, new FinishEvent($response))->getResponse();
     }
 
     /**

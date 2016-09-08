@@ -3,7 +3,9 @@
 namespace Prezent\Soap\Client\Tests;
 
 use Prezent\Soap\Client\SoapClient;
+use Prezent\Soap\Client\Event\CallEvent;
 use Prezent\Soap\Client\Event\FaultEvent;
+use Prezent\Soap\Client\Event\FinishEvent;
 use Prezent\Soap\Client\Event\RequestEvent;
 use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
@@ -241,6 +243,56 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test call/finish handling for __call
+     */
+    public function testCallEvents()
+    {
+        $callEvent = null;
+        $finishEvent = null;
+
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
+            [Events::REQUEST, [$this, 'handleRequest']],
+            [Events::CALL, function (CallEvent $event) use (&$callEvent) {
+                $callEvent = $event;
+            }],
+            [Events::FINISH, function (FinishEvent $event) use (&$finishEvent) {
+                $finishEvent = $event;
+            }]
+        ]]);
+
+        $client->sayHello('World');
+
+        $this->assertEquals('sayHello', $callEvent->getMethod());
+        $this->assertEquals(['World'], $callEvent->getArguments());
+        $this->assertEquals('Hello, World!', $finishEvent->getResponse());
+    }
+
+    /**
+     * Test call/finish handling for __SoapCall
+     */
+    public function testSoapCallEvents()
+    {
+        $callEvent = null;
+        $finishEvent = null;
+
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
+            [Events::REQUEST, [$this, 'handleRequest']],
+            [Events::CALL, function (CallEvent $event) use (&$callEvent) {
+                $callEvent = $event;
+            }],
+            [Events::FINISH, function (FinishEvent $event) use (&$finishEvent) {
+                $finishEvent = $event;
+            }]
+        ]]);
+
+        $client->__soapCall('sayHello', ['World']);
+
+        $this->assertEquals('sayHello', $callEvent->getMethod());
+        $this->assertEquals(['World'], $callEvent->getArguments());
+        $this->assertEquals('Hello, World!', $finishEvent->getResponse());
+    }
+
+    /**
      * Event listener to generate a "Hello, World!" response
      *
      * @param RequestEvent $event
@@ -250,17 +302,17 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
     {
         $xml = <<<XML
 <SOAP-ENV:Envelope
-xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-xmlns:ns1="urn:examples:helloservice"
-xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
-SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-<SOAP-ENV:Body>
-<ns1:sayHelloResponse>
-    <greeting xsi:type="xsd:string">Hello, World!</greeting>
-</ns1:sayHelloResponse>
-</SOAP-ENV:Body>
+    xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:ns1="urn:examples:helloservice"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+    SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <SOAP-ENV:Body>
+        <ns1:sayHelloResponse>
+            <greeting xsi:type="xsd:string">Hello, World!</greeting>
+        </ns1:sayHelloResponse>
+    </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
 XML;
 
