@@ -29,6 +29,8 @@ class SoapClient extends BaseSoapClient
      */
     private $tracing = false;
 
+    const NS_SOAP_ENVELOPE = 'http://schemas.xmlsoap.org/soap/envelope/';
+
     /**
      * {@inheritDoc}
      */
@@ -92,13 +94,7 @@ class SoapClient extends BaseSoapClient
                 (int) $event->isOneWay()
             );
 
-            $dom = new \DOMDocument();
-
-            if ($response) {
-                $dom->loadXML($response);
-            }
-
-            $event->setResponse($dom);
+            $event->setResponse($response);
             $event->stopPropagation();
         }, -999);
 
@@ -192,7 +188,17 @@ class SoapClient extends BaseSoapClient
         }
         
         try {
-            $responseEvent = new ResponseEvent($requestEvent->getResponse());
+            $dom = new \DOMDocument();
+            $loaded = @$dom->loadXML($requestEvent->getResponse()); // Mask error, check return value instead
+
+            if (!$loaded || $dom->getElementsByTagNameNS(self::NS_SOAP_ENVELOPE, 'Envelope')->length == 0) {
+                $this->__last_response = $requestEvent->getResponse();
+                $this->__last_response_headers = $requestEvent->getResponseHeaders();
+
+                throw new \RuntimeException('Response is not a SOAP response');
+            }
+
+            $responseEvent = new ResponseEvent($dom);
             $this->eventDispatcher->dispatch(Events::RESPONSE, $responseEvent);
         } catch (\Exception $e) {
             $this->__soap_fault = new \SoapFault(

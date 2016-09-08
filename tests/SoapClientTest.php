@@ -54,9 +54,11 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testWsdlResponse()
     {
+        $wsdl = null;
+
         $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
-            [Events::WSDL_RESPONSE, function (WsdlResponseEvent $event) {
-                $this->assertInstanceOf(\DOMDocument::class, $event->getWsdl());
+            [Events::WSDL_RESPONSE, function (WsdlResponseEvent $event) use (&$wsdl) {
+                $wsdl = $event->getWsdl();
                 
                 foreach ($event->getWsdl()->getElementsByTagNameNS(self::NS_WSDL, 'operation') as $node) {
                     $node->setAttribute('name', 'sayGoodbye');
@@ -66,6 +68,7 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
 
         $functions = $client->__getFunctions();
 
+        $this->assertInstanceOf(\DOMDocument::class, $wsdl);
         $this->assertCount(1, $functions);
         $this->assertEquals('string sayGoodbye(string $firstName)', $functions[0]);
     }
@@ -78,15 +81,17 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
     public function testRequest()
     {
         $uri = 'http://' . WEB_SERVER_HOSTNAME . ':' . WEB_SERVER_PORT . '/HelloService.php?wsdl';
+        $request = null;
 
         $client = new SoapClient($uri, ['event_listeners' => [
-            [Events::REQUEST, function (RequestEvent $event) {
-                $this->assertInstanceOf(\DOMDocument::class, $event->getRequest());
+            [Events::REQUEST, function (RequestEvent $event) use (&$request) {
+                $request = $event->getRequest();
             }]
         ]]);
 
         $response = $client->sayHello('World');
 
+        $this->assertInstanceOf(\DOMDocument::class, $request);
         $this->assertEquals('Hello, World!', $response);
     }
 
@@ -114,6 +119,29 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
         ]]);
 
         $response = $client->sayHello('World');
+    }
+
+    /**
+     * Test handling of non-SOAP responses
+     */
+    public function testNonSoapResponse()
+    {
+        $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
+            [Events::REQUEST, function (RequestEvent $event) {
+                $event->setResponse('Plain text');
+                $event->stopPropagation();
+            }]
+        ]]);
+
+        try {
+            $response = $client->sayHello('World');
+        } catch (\SoapFault $f) {
+            $this->assertInstanceOf(\SoapFault::class, $f);
+            $this->assertEquals('Plain text', $client->__getLastResponse());
+            return;
+        }
+
+        $this->fail('No \SoapFault found');
     }
 
     /**
@@ -192,6 +220,9 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(\SoapFault::class, $fault);
     }
 
+    /**
+     * Test handling fault by stopping propagation
+     */
     public function testHandleFault()
     {
         $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
@@ -200,11 +231,13 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
                 throw new \RuntimeException('Test exception');
             }],
             [Events::FAULT, function (FaultEvent $event) {
+                $event->setResponse('Dummy response');
                 $event->stopPropagation();
             }]
         ]]);
 
         $response = $client->sayHello('World');
+        $this->assertEquals('Dummy response', $response);
     }
 
     /**
@@ -231,11 +264,8 @@ SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
 </SOAP-ENV:Envelope>
 XML;
 
-        $response = new \DOMDocument();
-        $response->loadXML($xml);
-
         $event->setRequestHeaders('X-Header: request');
-        $event->setResponse($response);
+        $event->setResponse($xml);
         $event->setResponseHeaders('X-Header: response');
         $event->stopPropagation();
     }

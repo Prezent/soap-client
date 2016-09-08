@@ -39,8 +39,38 @@ final class Events
     const WSDL_RESPONSE = 'wsdl.response';
 
     const CALL = 'soap.call';
+
+    /**
+     * The REQUEST event is triggered when a SOAP request is about to be sent over a transport. The request and
+     * any parameters may be modified here. When implementing a custom transport, you can set the response as a
+     * string on the event and stop propagation. Optionally you can also set the request and response headers
+     * to facilitate tracing.
+     *
+     * All exceptions are converted to \SoapFault.
+     *
+     * Example:
+     *
+     *     $client->__addListener(Events::REQUEST, function(RequestEvent $event) {
+     *         $response = $guzzle->request('POST', $event->getLocation(), [
+     *             'body' => $event->getRequest()->saveXML(),
+     *         ]);
+     *
+     *         $event->setResponse($response->getBody());
+     *         $event->stopPropagation();
+     *     });
+     */
     const REQUEST = 'soap.request';
+
+    /**
+     * The RESPONSE event is triggered when a SOAP response has been recieved. The response can be modified before
+     * being processed by the rest of the client. Example:
+     *
+     *     $client->__addListener(Events::RESPONSE, function(ResponseEvent $event) {
+     *         $logger->log($event->getResponse()->saveXML());
+     *     });
+     */
     const RESPONSE = 'soap.response';
+
     const FINISH = 'soap.finish';
 
     /**

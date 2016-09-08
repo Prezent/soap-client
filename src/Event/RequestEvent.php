@@ -43,7 +43,7 @@ class RequestEvent extends Event
     private $oneWay;
 
     /**
-     * @var \DOMDocument
+     * @var string
      */
     private $response;
 
@@ -205,7 +205,7 @@ class RequestEvent extends Event
     /**
      * Get response
      *
-     * @return \DOMDocument
+     * @return string
      */
     public function getResponse()
     {
@@ -215,7 +215,7 @@ class RequestEvent extends Event
     /**
      * Set response
      *
-     * @param \DOMDocument $response
+     * @param string $response
      * @return self
      */
     public function setResponse($response)
