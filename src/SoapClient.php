@@ -183,9 +183,8 @@ class SoapClient extends BaseSoapClient
         } catch (\Exception $e) {
             $this->__soap_fault = new \SoapFault(
                 'Client',
-                'Error during ' . Events::REQUEST . ' event',
-                get_class($e),
-                $e->getMessage()
+                'Error during ' . Events::REQUEST . ' event: ' . $e->getMessage(),
+                get_class($e)
             );
 
             return;
@@ -217,9 +216,8 @@ class SoapClient extends BaseSoapClient
         } catch (\Exception $e) {
             $this->__soap_fault = new \SoapFault(
                 'Client',
-                'Error during ' . Events::RESPONSE . ' event',
-                get_class($e),
-                $e->getMessage()
+                'Error during ' . Events::RESPONSE . ' event: ' . $e->getMessage(),
+                get_class($e)
             );
 
             return;
