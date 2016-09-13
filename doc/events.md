@@ -37,7 +37,7 @@ listeners using the `__addListener` or `__addSubscriber` methods.
 
 ### Faults
 
-1. When a `SoapFault` is thrown, a `SoapFault` event is dispatched.
+1. When a `SoapFault` is thrown, a `FAULT` event is dispatched.
 
 
 Built-in event listeners
@@ -127,7 +127,11 @@ $client->__addListener(Events::REQUEST, function(RequestEvent $event) {
 
 The `RESPONSE` event is triggered when a SOAP response has been recieved. The listener is passed a
 `Prezent\Soap\Client\Event\ResponseEvent` instance. The response can be modified before being processed
-by the rest of the client. Example:
+by the rest of the client.
+
+All exceptions are converted to `SoapFault`.
+
+Example:
 
 ```php
 $client->__addListener(Events::RESPONSE, function(ResponseEvent $event) {

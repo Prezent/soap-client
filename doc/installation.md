@@ -4,7 +4,7 @@ Installation
 This extension can be installed using Composer. Tell composer to install the extension:
 
 ```bash
-$ php composer.phar require prezent/soap-client
+$ composer require prezent/soap-client
 ```
 
 ## Usage
