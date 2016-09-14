@@ -19,7 +19,7 @@ class WSAddressing implements EventSubscriberInterface
     /**
      * XML namespaces
      */
-    const NS_WSA = 'http://schemas.xmlsoap.org/ws/2004/08/addressing';
+    const NS_WSA = 'http://www.w3.org/2005/08/addressing';
     const NS_WSAW = 'http://www.w3.org/2006/05/addressing/wsdl';
     const NS_XMLNS = 'http://www.w3.org/2000/xmlns/';
 
