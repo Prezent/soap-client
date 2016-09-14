@@ -31,7 +31,10 @@ class SoapClient extends BaseSoapClient
      */
     private $tracing = false;
 
-    const NS_SOAP_ENVELOPE = 'http://schemas.xmlsoap.org/soap/envelope/';
+    const NS_SOAP_ENVELOPE = [
+        SOAP_1_1 => 'http://schemas.xmlsoap.org/soap/envelope/',
+        SOAP_1_2 => 'http://www.w3.org/2003/05/soap-envelope',
+    ];
 
     /**
      * {@inheritDoc}
@@ -204,7 +207,7 @@ class SoapClient extends BaseSoapClient
             $dom = new \DOMDocument();
             $loaded = @$dom->loadXML($requestEvent->getResponse()); // Mask error, check return value instead
 
-            if (!$loaded || $dom->getElementsByTagNameNS(self::NS_SOAP_ENVELOPE, 'Envelope')->length == 0) {
+            if (!$loaded || $dom->getElementsByTagNameNS(self::NS_SOAP_ENVELOPE[$version], 'Envelope')->length == 0) {
                 $this->__last_response = $requestEvent->getResponse();
                 $this->__last_response_headers = $requestEvent->getResponseHeaders();
 
