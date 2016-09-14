@@ -122,7 +122,11 @@ class WSAddressing implements EventSubscriberInterface
         // Add ReplyTo
         if (!$event->isOneWay()) {
             $address = $this->address ?: self::ANONYMOUS;
-            $header->appendChild($request->createElementNS(self::NS_WSA, 'wsa:ReplyTo', $address));
+
+            $replyTo = $request->createElementNS(self::NS_WSA, 'wsa:ReplyTo');
+            $replyTo->appendChild($request->createElementNS(self::NS_WSA, 'wsa:Address', $address));
+
+            $header->appendChild($replyTo);
         }
     }
 
