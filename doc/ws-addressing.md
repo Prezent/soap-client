@@ -29,7 +29,7 @@ WSAddressing::__construct([$address[, $force]])
 
 ### `$address`
 
-The address you want to use as a `ReplyTo` address. If omitted, if defaults to the anonymous address
+The address you want to use as a `ReplyTo` address. If omitted, it defaults to the anonymous address
 http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous
 
 ### `$force`
@@ -59,3 +59,14 @@ The SOAP action
 
 The address where the response should be sent. This header is only added for SOAP requests that expect a response.
 One-way SOAP requests will not have a `ReplyTo` header.
+
+### `From`
+
+The source endpoint address where the message originated from. This header is optional and omitted by default, but can be included by using the `setIncludeFrom` method.
+When included `setFromAddress` can be used to specify the from address.
+```
+$wsAddressing->setIncludeFrom(true);
+$wsAddressing->setFromAddress('http://example.org/source');
+```
+When included but the value of fromAddress is omitted, it defaults to the anonymous address
+http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous

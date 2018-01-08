@@ -44,6 +44,7 @@ class WSAddressingTest extends \PHPUnit_Framework_TestCase
     public function testWsaRequest()
     {
         $wsaExtension = new WSAddressing();
+        $wsaExtension->setIncludeFrom(true);
         $request = null;
 
         $client = new SoapClient(__DIR__ . '/../Fixtures/hello-wsa.wsdl', [
@@ -67,6 +68,7 @@ class WSAddressingTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $xpath->query('//wsa:Action')->length);
         $this->assertEquals(1, $xpath->query('//wsa:To')->length);
         $this->assertEquals(1, $xpath->query('//wsa:ReplyTo')->length);
+        $this->assertEquals(1, $xpath->query('//wsa:From')->length);
     }
 
     /**
