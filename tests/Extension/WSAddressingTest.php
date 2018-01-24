@@ -44,7 +44,7 @@ class WSAddressingTest extends \PHPUnit_Framework_TestCase
     public function testWsaRequest()
     {
         $wsaExtension = new WSAddressing();
-        $wsaExtension->setIncludeFrom(true);
+        $wsaExtension->setFrom(true);
         $request = null;
 
         $client = new SoapClient(__DIR__ . '/../Fixtures/hello-wsa.wsdl', [

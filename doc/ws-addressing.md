@@ -62,11 +62,11 @@ One-way SOAP requests will not have a `ReplyTo` header.
 
 ### `From`
 
-The source endpoint address where the message originated from. This header is optional and omitted by default, but can be included by using the `setIncludeFrom` method.
-When included `setFromAddress` can be used to specify the from address.
+The source endpoint address where the message originated from. This header is optional and omitted by default, but can be included by using the `setFrom` method.
+`setFrom` can be used to specify the from address, or use the anonymous address when true is given.
+http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous 
 ```
-$wsAddressing->setIncludeFrom(true);
-$wsAddressing->setFromAddress('http://example.org/source');
+$wsAddressing->setFrom(false); // The default, From header is omitted
+$wsAddressing->setFrom(true); // Adds the anonymous From header
+$wsAddressing->setFrom('http://example.org/source'); // Adds custom From address
 ```
-When included but the value of fromAddress is omitted, it defaults to the anonymous address
-http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous

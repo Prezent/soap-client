@@ -34,14 +34,9 @@ class WSAddressing implements EventSubscriberInterface
     private $address;
 
     /**
-     * @var string From address of source endpoint
+     * @var bool|string From address of source endpoint
      */
-    private $fromAddress = self::ANONYMOUS;
-
-    /**
-     * @var bool include From header
-     */
-    private $includeFrom = false;
+    private $from = false;
 
     /**
      * @var bool
@@ -130,8 +125,9 @@ class WSAddressing implements EventSubscriberInterface
         $header->appendChild($request->createElementNS(self::NS_WSA, 'wsa:To', $event->getLocation()));
 
         // Add From
-        if ($this->isIncludeFrom()) {
-            $fromAddress = $this->fromAddress ?: self::ANONYMOUS;
+        if (false !== $this->getFrom()) {
+            // use anonymous when set to true, given address otherwise
+            $fromAddress = $this->getFrom() === true ? self::ANONYMOUS : $this->getFrom();
             $from = $request->createElementNS(self::NS_WSA, 'wsa:From');
             $from->appendChild($request->createElementNS(self::NS_WSA, 'wsa:Address', $fromAddress));
             $header->appendChild($from);
@@ -181,47 +177,25 @@ class WSAddressing implements EventSubscriberInterface
     }
 
     /**
-     * Getter for fromAddress
+     * Getter for from
      *
-     * @return string
+     * @return bool|string
      */
-    public function getFromAddress()
+    public function getFrom()
     {
-        return $this->fromAddress;
+        return $this->from;
     }
 
     /**
-     * Setter for fromAddress
+     * Setter for from
+     * use boolean true to use anonymous, string for custom address
      *
-     * @param string $fromAddress
+     * @param bool|string $from include from with optional custom address
      * @return self
      */
-    public function setFromAddress($fromAddress)
+    public function setFrom($from)
     {
-        $this->fromAddress = $fromAddress;
-
-        return $this;
-    }
-
-    /**
-     * Isser for includeFrom
-     *
-     * @return bool
-     */
-    public function isIncludeFrom()
-    {
-        return $this->includeFrom;
-    }
-
-    /**
-     * Setter for includeFrom
-     *
-     * @param bool $includeFrom
-     * @return self
-     */
-    public function setIncludeFrom($includeFrom)
-    {
-        $this->includeFrom = $includeFrom;
+        $this->from = $from;
 
         return $this;
     }
