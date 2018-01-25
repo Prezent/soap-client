@@ -24,7 +24,7 @@ class WSAddressing implements EventSubscriberInterface
     const NS_XMLNS = 'http://www.w3.org/2000/xmlns/';
 
     /**
-     * Default ReplyTo address
+     * Default ReplyTo and From address
      */
     const ANONYMOUS = 'http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous';
 
@@ -32,6 +32,11 @@ class WSAddressing implements EventSubscriberInterface
      * @var string Reply-to address
      */
     private $address;
+
+    /**
+     * @var bool|string From address of source endpoint
+     */
+    private $from = false;
 
     /**
      * @var bool
@@ -119,6 +124,15 @@ class WSAddressing implements EventSubscriberInterface
         // Add To
         $header->appendChild($request->createElementNS(self::NS_WSA, 'wsa:To', $event->getLocation()));
 
+        // Add From
+        if (false !== $this->getFrom()) {
+            // use anonymous when set to true, given address otherwise
+            $fromAddress = $this->getFrom() === true ? self::ANONYMOUS : $this->getFrom();
+            $from = $request->createElementNS(self::NS_WSA, 'wsa:From');
+            $from->appendChild($request->createElementNS(self::NS_WSA, 'wsa:Address', $fromAddress));
+            $header->appendChild($from);
+        }
+
         // Add ReplyTo
         if (!$event->isOneWay()) {
             $address = $this->address ?: self::ANONYMOUS;
@@ -155,10 +169,34 @@ class WSAddressing implements EventSubscriberInterface
     /**
      * Check if WS-Addressing is enabled
      *
-     * @return void
+     * @return bool
      */
     public function isEnabled()
     {
         return $this->wsaEnabled;
+    }
+
+    /**
+     * Getter for from
+     *
+     * @return bool|string
+     */
+    public function getFrom()
+    {
+        return $this->from;
+    }
+
+    /**
+     * Setter for from
+     * use boolean true to use anonymous, string for custom address
+     *
+     * @param bool|string $from include from with optional custom address
+     * @return self
+     */
+    public function setFrom($from)
+    {
+        $this->from = $from;
+
+        return $this;
     }
 }
