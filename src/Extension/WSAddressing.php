@@ -44,15 +44,22 @@ class WSAddressing implements EventSubscriberInterface
     private $wsaEnabled = false;
 
     /**
+     * @var bool
+     */
+    private $messageIdNeeded = true;
+
+    /**
      * Constructor
      *
      * @param string $address Reply-to address
-     * @param bool $force Force WSA in non-WSDL mode
+     * @param bool   $force   Force WSA in non-WSDL mode
+     * @param bool   $messageIdNeeded
      */
-    public function __construct($address = null, $force = false)
+    public function __construct($address = null, $force = false, $messageIdNeeded = true)
     {
-        $this->address = $address;
-        $this->wsaEnabled = $force;
+        $this->address         = $address;
+        $this->wsaEnabled      = $force;
+        $this->messageIdNeeded = $messageIdNeeded;
     }
 
     /**
@@ -115,8 +122,10 @@ class WSAddressing implements EventSubscriberInterface
             $envelope->insertBefore($header, $envelope->firstChild);
         }
 
-        // Add MessageID
-        $header->appendChild($request->createElementNS(self::NS_WSA, 'wsa:MessageID', 'uuid:' . Uuid::uuid4()));
+        if ($this->messageIdNeeded) {
+            // Add MessageID
+            $header->appendChild($request->createElementNS(self::NS_WSA, 'wsa:MessageID', 'uuid:' . Uuid::uuid4()));
+        }
 
         // Add Action
         $header->appendChild($request->createElementNS(self::NS_WSA, 'wsa:Action', $event->getAction()));
