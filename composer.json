@@ -9,7 +9,7 @@
         "php": "^5.5|^7.0",
         "ext-soap": "*",
         "ramsey/uuid": "^3.0",
-        "symfony/event-dispatcher": "^2.3|^3.0"
+        "symfony/event-dispatcher": "^2.3|^3.0|^4.0"
     },
     "license": "MIT",
     "authors": [
