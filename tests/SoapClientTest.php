@@ -2,6 +2,7 @@
 
 namespace Prezent\Soap\Client\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Prezent\Soap\Client\SoapClient;
 use Prezent\Soap\Client\Event\CallEvent;
 use Prezent\Soap\Client\Event\FaultEvent;
@@ -11,8 +12,9 @@ use Prezent\Soap\Client\Event\ResponseEvent;
 use Prezent\Soap\Client\Event\WsdlRequestEvent;
 use Prezent\Soap\Client\Event\WsdlResponseEvent;
 use Prezent\Soap\Client\Events;
+use SoapFault;
 
-class SoapClientTest extends \PHPUnit_Framework_TestCase
+class SoapClientTest extends TestCase
 {
     const NS_WSDL = 'http://schemas.xmlsoap.org/wsdl/';
 
@@ -61,7 +63,7 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
         $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
             [Events::WSDL_RESPONSE, function (WsdlResponseEvent $event) use (&$wsdl) {
                 $wsdl = $event->getWsdl();
-                
+
                 foreach ($event->getWsdl()->getElementsByTagNameNS(self::NS_WSDL, 'operation') as $node) {
                     $node->setAttribute('name', 'sayGoodbye');
                 }
@@ -108,10 +110,7 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('Hello, World!', $client->sayHello('me'));
     }
-    
-    /**
-     * @expectedException \SoapFault
-     */
+
     public function testRequestException()
     {
         $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
@@ -119,6 +118,8 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
                 throw new \RuntimeException('Test exception');
             }]
         ]]);
+
+        $this->expectException(SoapFault::class);
 
         $response = $client->sayHello('World');
     }
@@ -176,13 +177,10 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('X-Header: request', $client->__getLastRequestHeaders());
         $this->assertEquals('X-Header: response', $client->__getLastResponseHeaders());
-        $this->assertRegexp('/World/', $client->__getLastRequest());
-        $this->assertRegexp('/Hello, Universe/', $client->__getLastResponse());
+        $this->assertStringContainsString('World', $client->__getLastRequest());
+        $this->assertStringContainsString('Hello, Universe', $client->__getLastResponse());
     }
-    
-    /**
-     * @expectedException \SoapFault
-     */
+
     public function testResponseException()
     {
         $client = new SoapClient(__DIR__ . '/Fixtures/hello-world.wsdl', ['event_listeners' => [
@@ -191,6 +189,8 @@ class SoapClientTest extends \PHPUnit_Framework_TestCase
                 throw new \RuntimeException('Test exception');
             }]
         ]]);
+
+        $this->expectException(SoapFault::class);
 
         $response = $client->sayHello('World');
     }

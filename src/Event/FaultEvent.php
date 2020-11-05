@@ -2,7 +2,7 @@
 
 namespace Prezent\Soap\Client\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * FaultEvent
@@ -124,7 +124,7 @@ class FaultEvent extends Event
     {
         return $this->response;
     }
-    
+
     /**
      * Set response
      *

@@ -2,7 +2,7 @@
 
 namespace Prezent\Soap\Client\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * CallEvent
@@ -43,7 +43,7 @@ class CallEvent extends Event
     {
         return $this->method;
     }
-    
+
     /**
      * Set method
      *
@@ -65,7 +65,7 @@ class CallEvent extends Event
     {
         return $this->arguments;
     }
-    
+
     /**
      * Set arguments
      *

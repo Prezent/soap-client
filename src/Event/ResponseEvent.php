@@ -2,7 +2,7 @@
 
 namespace Prezent\Soap\Client\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * ResponseEvent
@@ -36,7 +36,7 @@ class ResponseEvent extends Event
     {
         return $this->response;
     }
-    
+
     /**
      * Set response
      *

@@ -2,7 +2,7 @@
 
 namespace Prezent\Soap\Client\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * RequestEvent
@@ -79,7 +79,7 @@ class RequestEvent extends Event
     {
         return $this->request;
     }
-    
+
     /**
      * Set request
      *
@@ -101,7 +101,7 @@ class RequestEvent extends Event
     {
         return $this->requestHeaders;
     }
-    
+
     /**
      * Set requestHeaders
      *
@@ -123,7 +123,7 @@ class RequestEvent extends Event
     {
         return $this->location;
     }
-    
+
     /**
      * Set location
      *
@@ -145,7 +145,7 @@ class RequestEvent extends Event
     {
         return $this->action;
     }
-    
+
     /**
      * Set action
      *
@@ -167,7 +167,7 @@ class RequestEvent extends Event
     {
         return $this->version;
     }
-    
+
     /**
      * Set version
      *
@@ -189,7 +189,7 @@ class RequestEvent extends Event
     {
         return $this->oneWay;
     }
-    
+
     /**
      * Set oneWay
      *
@@ -211,7 +211,7 @@ class RequestEvent extends Event
     {
         return $this->response;
     }
-    
+
     /**
      * Set response
      *
@@ -233,7 +233,7 @@ class RequestEvent extends Event
     {
         return $this->responseHeaders;
     }
-    
+
     /**
      * Set responseHeaders
      *

@@ -7,6 +7,13 @@
 
 namespace Prezent\Soap\Client\Tests\PHPUnit;
 
+use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\Test;
+use PHPUnit\Framework\TestListener;
+use PHPUnit\Framework\TestSuite;
+use PHPUnit\Framework\Warning;
+use Throwable;
+
 /**
  * A PHPUnit test listener that starts and stops the PHP built-in web server.
  *
@@ -20,7 +27,7 @@ namespace Prezent\Soap\Client\Tests\PHPUnit;
  * WEB_SERVER_PORT     port to listen on (required)
  * WEB_SERVER_DOCROOT  path to the document root for the server (required)
  */
-class WebServerListener implements \PHPUnit_Framework_TestListener
+class WebServerListener implements TestListener
 {
     /**
      * PHP web server PID.
@@ -33,7 +40,7 @@ class WebServerListener implements \PHPUnit_Framework_TestListener
      * Make sure the PHP built-in web server is running for tests with group
      * 'webserver'.
      */
-    public function startTestSuite(\PHPUnit_Framework_TestSuite $suite)
+    public function startTestSuite(TestSuite $suite): void
     {
         // Only run on PHP >= 5.4 as PHP below that and HHVM don't have a
         // built-in web server
@@ -55,35 +62,39 @@ class WebServerListener implements \PHPUnit_Framework_TestListener
     /**
      *  We don't need these.
      */
-    public function endTestSuite(\PHPUnit_Framework_TestSuite $suite)
+    public function addError(Test $test, Throwable $t, float $time): void
     {
     }
 
-    public function addError(\PHPUnit_Framework_Test $test, \Exception $e, $time)
+    public function addWarning(Test $test, Warning $e, float $time): void
     {
     }
 
-    public function addFailure(\PHPUnit_Framework_Test $test, \PHPUnit_Framework_AssertionFailedError $e, $time)
+    public function addFailure(Test $test, AssertionFailedError $e, float $time): void
     {
     }
 
-    public function addIncompleteTest(\PHPUnit_Framework_Test $test, \Exception $e, $time)
+    public function addIncompleteTest(Test $test, Throwable $t, float $time): void
     {
     }
 
-    public function addSkippedTest(\PHPUnit_Framework_Test $test, \Exception $e, $time)
+    public function addRiskyTest(Test $test, Throwable $t, float $time): void
     {
     }
 
-    public function startTest(\PHPUnit_Framework_Test $test)
+    public function addSkippedTest(Test $test, Throwable $t, float $time): void
     {
     }
 
-    public function endTest(\PHPUnit_Framework_Test $test, $time)
+    public function endTestSuite(TestSuite $suite): void
     {
     }
 
-    public function addRiskyTest(\PHPUnit_Framework_Test $test, \Exception $e, $time)
+    public function startTest(Test $test): void
+    {
+    }
+
+    public function endTest(Test $test, float $time): void
     {
     }
 

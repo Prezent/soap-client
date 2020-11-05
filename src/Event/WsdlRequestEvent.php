@@ -2,7 +2,7 @@
 
 namespace Prezent\Soap\Client\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * WsdlRequestEvent
@@ -63,7 +63,7 @@ class WsdlRequestEvent extends Event
     {
         return $this->wsdl;
     }
-    
+
     /**
      * Set wsdl
      *

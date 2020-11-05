@@ -2,6 +2,7 @@
 
 namespace Prezent\Soap\Client\Tests\Extension;
 
+use PHPUnit\Framework\TestCase;
 use Prezent\Soap\Client\SoapClient;
 use Prezent\Soap\Client\Event\CallEvent;
 use Prezent\Soap\Client\Event\FaultEvent;
@@ -13,7 +14,7 @@ use Prezent\Soap\Client\Event\WsdlResponseEvent;
 use Prezent\Soap\Client\Events;
 use Prezent\Soap\Client\Extension\WSAddressing;
 
-class WSAddressingTest extends \PHPUnit_Framework_TestCase
+class WSAddressingTest extends TestCase
 {
     public function testDetectWsaNotEnabled()
     {

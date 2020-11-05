@@ -138,7 +138,7 @@ class SoapClient extends BaseSoapClient
     public function __call($method, $args)
     {
         $event = new CallEvent($method, $args);
-        $this->eventDispatcher->dispatch(Events::CALL, $event);
+        $this->eventDispatcher->dispatch($event, Events::CALL);
 
         try {
             $response = parent::__call($event->getMethod(), $event->getArguments());
@@ -146,7 +146,7 @@ class SoapClient extends BaseSoapClient
             return $this->handleFault($fault);
         }
 
-        return $this->eventDispatcher->dispatch(Events::FINISH, new FinishEvent($response))->getResponse();
+        return $this->eventDispatcher->dispatch(new FinishEvent($response), Events::FINISH)->getResponse();
     }
 
     /**
@@ -155,7 +155,7 @@ class SoapClient extends BaseSoapClient
     public function __soapCall($method, $args, $options = [], $inputHeaders = [], &$outputHeaders = [])
     {
         $event = new CallEvent($method, $args);
-        $this->eventDispatcher->dispatch(Events::CALL, $event);
+        $this->eventDispatcher->dispatch($event, Events::CALL);
 
         try {
             $response = parent::__soapCall(
@@ -169,7 +169,7 @@ class SoapClient extends BaseSoapClient
             return $this->handleFault($fault);
         }
 
-        return $this->eventDispatcher->dispatch(Events::FINISH, new FinishEvent($response))->getResponse();
+        return $this->eventDispatcher->dispatch(new FinishEvent($response), Events::FINISH)->getResponse();
     }
 
     /**
@@ -182,7 +182,7 @@ class SoapClient extends BaseSoapClient
 
         try {
             $requestEvent = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
-            $this->eventDispatcher->dispatch(Events::REQUEST, $requestEvent);
+            $this->eventDispatcher->dispatch($requestEvent, Events::REQUEST);
         } catch (\Exception $e) {
             $this->__soap_fault = new \SoapFault(
                 'Client',
@@ -202,7 +202,7 @@ class SoapClient extends BaseSoapClient
             $this->__soap_fault = new \SoapFault('Client', 'No response could be generated');
             return;
         }
-        
+
         try {
             $dom = new \DOMDocument();
             $loaded = @$dom->loadXML($requestEvent->getResponse()); // Mask error, check return value instead
@@ -215,7 +215,7 @@ class SoapClient extends BaseSoapClient
             }
 
             $responseEvent = new ResponseEvent($dom);
-            $this->eventDispatcher->dispatch(Events::RESPONSE, $responseEvent);
+            $this->eventDispatcher->dispatch($responseEvent, Events::RESPONSE);
         } catch (\Exception $e) {
             $this->__soap_fault = new \SoapFault(
                 'Client',
@@ -230,7 +230,7 @@ class SoapClient extends BaseSoapClient
             $this->__last_response = $responseEvent->getResponse()->saveXML();
             $this->__last_response_headers = $requestEvent->getResponseHeaders();
         }
-        
+
         return $responseEvent->getResponse()->saveXML();
     }
 
@@ -242,7 +242,7 @@ class SoapClient extends BaseSoapClient
      */
     private function getWsdl($uri)
     {
-        $wsdl = $this->eventDispatcher->dispatch(Events::WSDL_REQUEST, new WsdlRequestEvent($uri))->getWsdl();
+        $wsdl = $this->eventDispatcher->dispatch(new WsdlRequestEvent($uri), Events::WSDL_REQUEST)->getWsdl();
 
         if (!$wsdl) {
             throw new \RuntimeException(sprintf('Could not load WSDL from "%s"', $uri));
@@ -252,8 +252,8 @@ class SoapClient extends BaseSoapClient
         $dom->loadXML($wsdl);
 
         $event = new WsdlResponseEvent($dom);
-        $this->eventDispatcher->dispatch(Events::WSDL_RESPONSE, $event);
-        
+        $this->eventDispatcher->dispatch($event, Events::WSDL_RESPONSE);
+
         return $event->getWsdl()->saveXML();
     }
 
@@ -275,7 +275,7 @@ class SoapClient extends BaseSoapClient
             $this->__getLastResponseHeaders()
         );
 
-        if (!$this->eventDispatcher->dispatch(Events::FAULT, $event)->isPropagationStopped()) {
+        if (!$this->eventDispatcher->dispatch($event, Events::FAULT)->isPropagationStopped()) {
             throw $fault;
         }
 
