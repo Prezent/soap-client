@@ -294,7 +294,7 @@ class SoapClient extends BaseSoapClient
      * Get the WSDL file
      *
      * @param mixed $uri
-     * @return void
+     * @return false|string
      */
     private function getWsdl($uri)
     {
