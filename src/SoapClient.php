@@ -42,11 +42,6 @@ class SoapClient extends BaseSoapClient
     private $streamContext;
 
     /**
-     * @var \SoapFault|null
-     */
-    private $soapFault;
-
-    /**
      * @var string|null
      */
     private $lastRequest;
@@ -213,14 +208,14 @@ class SoapClient extends BaseSoapClient
         try {
             $requestEvent = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
             $this->eventDispatcher->dispatch($requestEvent, Events::REQUEST);
+        } catch (\SoapFault $e) {
+            throw $e;
         } catch (\Exception $e) {
-            $this->soapFault = new \SoapFault(
+            throw new \SoapFault(
                 'Client',
                 'Error during ' . Events::REQUEST . ' event: ' . $e->getMessage(),
                 get_class($e)
             );
-
-            return;
         }
 
         if ($this->tracing) {
@@ -229,8 +224,7 @@ class SoapClient extends BaseSoapClient
         }
 
         if (!$requestEvent->getResponse()) {
-            $this->soapFault = new \SoapFault('Client', 'No response could be generated');
-            return;
+            throw new \SoapFault('Client', 'No response could be generated');
         }
 
         try {
@@ -246,14 +240,14 @@ class SoapClient extends BaseSoapClient
 
             $responseEvent = new ResponseEvent($dom);
             $this->eventDispatcher->dispatch($responseEvent, Events::RESPONSE);
+        } catch (\SoapFault $e) {
+            throw $e;
         } catch (\Exception $e) {
-            $this->soapFault = new \SoapFault(
+            throw new \SoapFault(
                 'Client',
                 'Error during ' . Events::RESPONSE . ' event: ' . $e->getMessage(),
                 get_class($e)
             );
-
-            return;
         }
 
         if ($this->tracing) {
