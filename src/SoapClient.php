@@ -37,6 +37,31 @@ class SoapClient extends BaseSoapClient
     ];
 
     /**
+     * @var resource
+     */
+    private $streamContext;
+
+    /**
+     * @var string|null
+     */
+    private $lastRequest;
+
+    /**
+     * @var string|null
+     */
+    private $lastRequestHeaders;
+
+    /**
+     * @var string|null
+     */
+    private $lastResponse;
+
+    /**
+     * @var string|null
+     */
+    private $lastResponseHeaders;
+
+    /**
      * {@inheritDoc}
      */
     public function __construct($wsdl, array $options = [])
@@ -105,7 +130,7 @@ class SoapClient extends BaseSoapClient
 
         // Load WSDL using a data:// URI. This allows us to load the WSDL by any transport
         // instead of always using the built-in method. It also allows custom WSDL parsing
-        parent::SoapClient('data://text/xml;base64,' . base64_encode($this->getWsdl($wsdl)), $options);
+        parent::__construct('data://text/xml;base64,' . base64_encode($this->getWsdl($wsdl)), $options);
     }
 
     /**
@@ -183,24 +208,23 @@ class SoapClient extends BaseSoapClient
         try {
             $requestEvent = new RequestEvent($dom, $location, $action, $version, $oneWay === 1);
             $this->eventDispatcher->dispatch($requestEvent, Events::REQUEST);
+        } catch (\SoapFault $e) {
+            throw $e;
         } catch (\Exception $e) {
-            $this->__soap_fault = new \SoapFault(
+            throw new \SoapFault(
                 'Client',
                 'Error during ' . Events::REQUEST . ' event: ' . $e->getMessage(),
                 get_class($e)
             );
-
-            return;
         }
 
         if ($this->tracing) {
-            $this->__last_request = $requestEvent->getRequest()->saveXML();
-            $this->__last_request_headers = $requestEvent->getRequestHeaders();
+            $this->lastRequest = $requestEvent->getRequest()->saveXML();
+            $this->lastRequestHeaders = $requestEvent->getRequestHeaders();
         }
 
         if (!$requestEvent->getResponse()) {
-            $this->__soap_fault = new \SoapFault('Client', 'No response could be generated');
-            return;
+            throw new \SoapFault('Client', 'No response could be generated');
         }
 
         try {
@@ -208,37 +232,69 @@ class SoapClient extends BaseSoapClient
             $loaded = @$dom->loadXML($requestEvent->getResponse()); // Mask error, check return value instead
 
             if (!$loaded || $dom->getElementsByTagNameNS(self::NS_SOAP_ENVELOPE[$version], 'Envelope')->length == 0) {
-                $this->__last_response = $requestEvent->getResponse();
-                $this->__last_response_headers = $requestEvent->getResponseHeaders();
+                $this->lastResponse = $requestEvent->getResponse();
+                $this->lastResponseHeaders = $requestEvent->getResponseHeaders();
 
                 throw new \RuntimeException('Response is not a SOAP response');
             }
 
             $responseEvent = new ResponseEvent($dom);
             $this->eventDispatcher->dispatch($responseEvent, Events::RESPONSE);
+        } catch (\SoapFault $e) {
+            throw $e;
         } catch (\Exception $e) {
-            $this->__soap_fault = new \SoapFault(
+            throw new \SoapFault(
                 'Client',
                 'Error during ' . Events::RESPONSE . ' event: ' . $e->getMessage(),
                 get_class($e)
             );
-
-            return;
         }
 
         if ($this->tracing) {
-            $this->__last_response = $responseEvent->getResponse()->saveXML();
-            $this->__last_response_headers = $requestEvent->getResponseHeaders();
+            $this->lastResponse = $responseEvent->getResponse()->saveXML();
+            $this->lastResponseHeaders = $requestEvent->getResponseHeaders();
         }
 
         return $responseEvent->getResponse()->saveXML();
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function __getLastRequest(): ?string
+    {
+        return $this->lastRequest ?? parent::__getLastRequest();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function __getLastResponse(): ?string
+    {
+        return $this->lastResponse ?? parent::__getLastResponse();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function __getLastRequestHeaders(): ?string
+    {
+        return $this->lastRequestHeaders ?? parent::__getLastRequestHeaders();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function __getLastResponseHeaders(): ?string
+    {
+        return $this->lastResponseHeaders ?? parent::__getLastResponseHeaders();
+    }
+
+    /**
      * Get the WSDL file
      *
      * @param mixed $uri
-     * @return void
+     * @return false|string
      */
     private function getWsdl($uri)
     {
