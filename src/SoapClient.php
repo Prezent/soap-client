@@ -160,7 +160,7 @@ class SoapClient extends BaseSoapClient
     /**
      * {@inheritDoc}
      */
-    public function __call($method, $args)
+    public function __call($method, $args) : mixed
     {
         $event = new CallEvent($method, $args);
         $this->eventDispatcher->dispatch($event, Events::CALL);
@@ -177,7 +177,7 @@ class SoapClient extends BaseSoapClient
     /**
      * {@inheritDoc}
      */
-    public function __soapCall($method, $args, $options = [], $inputHeaders = [], &$outputHeaders = [])
+    public function __soapCall($method, $args, $options = [], $inputHeaders = [], &$outputHeaders = []) : mixed
     {
         $event = new CallEvent($method, $args);
         $this->eventDispatcher->dispatch($event, Events::CALL);
@@ -200,7 +200,7 @@ class SoapClient extends BaseSoapClient
     /**
      * {@inheritDoc}
      */
-    public function __doRequest($request, $location, $action, $version, $oneWay = 0)
+    public function __doRequest($request, $location, $action, $version, $oneWay = 0) : ?string
     {
         $dom = new \DOMDocument();
         $dom->loadXML($request);
