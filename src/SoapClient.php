@@ -130,7 +130,9 @@ class SoapClient extends BaseSoapClient
 
         // Load WSDL using a data:// URI. This allows us to load the WSDL by any transport
         // instead of always using the built-in method. It also allows custom WSDL parsing
-        parent::__construct('data://text/xml;base64,' . base64_encode($this->getWsdl($wsdl)), $options);
+        $wsdlData = $wsdl ? 'data://text/xml;base64,' . base64_encode($this->getWsdl($wsdl)) : null;
+
+        parent::__construct($wsdlData, $options);
     }
 
     /**
